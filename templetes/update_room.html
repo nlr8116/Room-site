@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Room Availability</title>
+</head>
+<body>
+    <h1>Update Room Availability</h1>
+    <form action="/update-room" method="post">
+        <!-- Input for Room Number -->
+        <label for="roomNumber">Room Number:</label>
+        <input type="text" id="roomNumber" name="roomNumber" required>
+        <br><br>
+
+        <!-- Input for Availability -->
+        <label for="available">Available (True/False):</label>
+        <input type="text" id="available" name="available" required>
+        <br><br>
+
+        <button type="submit">Update Room</button>
+    </form>
+    <br>
+    <p><a href="/view-data">View Data</a></p>
+</body>
+</html>

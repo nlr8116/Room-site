@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Room Status</title>
+</head>
+<body>
+    {% if success %}
+        <h1>Success!</h1>
+        <p>Room {{ room_number }} availability was successfully updated to {{ availability }}.</p>
+    {% else %}
+        <h1>Failed to Update Room</h1>
+        <p>{{ error_message }}</p>
+    {% endif %}
+    <br>
+    <p><a href="/update-room">Try Again</a></p>
+    <p><a href="/view-data">View All Rooms</a></p>
+</body>
+</html>

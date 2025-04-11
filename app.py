@@ -72,5 +72,30 @@ def clear_data():
         return render_template("clear_data.html", success=True, num_deleted=num_deleted)
     except Exception as e:
         return render_template("clear_data.html", success=False, error=str(e))
+    
+@app.route("/update-room", methods=["GET", "POST"])
+def update_room():
+    if request.method == "POST":
+        room_number = request.form.get("roomNumber")
+        availability = request.form.get("available")
+
+        # Validate inputs
+        if not room_number or availability not in ["True", "False"]:
+            return render_template("update_status.html", success=False, error_message="Invalid input. Availability must be 'True' or 'False'.")
+
+        # Convert availability to boolean
+        is_available = True if availability == "True" else False
+
+        # Find the room and update its availability
+        room = RoomData.query.filter_by(room_number=room_number).first()
+        if room:
+            room.available = str(is_available)  # Store as string to match DB
+            db.session.commit()
+            return render_template("update_status.html", success=True, room_number=room_number, availability=availability)
+        else:
+            return render_template("update_status.html", success=False, error_message=f"No room found with room number {room_number}.")
+
+    return render_template("update_room.html")
+
 if __name__ == '__main__':
     app.run(debug=True, host = "0.0.0.0", port = "8000")
