@@ -37,7 +37,7 @@ def home():
         return "Data added to database!"
 
     return render_template("index.html")
-
+#Route to handle sumisiion of room data
 @app.route("/submit", methods=["POST"])
 def submit_data():
     room_number = request.form.get("roomNumber")
@@ -63,6 +63,7 @@ def view_data():
     all_data = RoomData.query.all()
     return render_template("view_data.html", data=all_data)
 
+#route to clear data if large amount of rooms have changed
 @app.route("/clear-data")
 def clear_data():
     try:
@@ -72,7 +73,8 @@ def clear_data():
         return render_template("clear_data.html", success=True, num_deleted=num_deleted)
     except Exception as e:
         return render_template("clear_data.html", success=False, error=str(e))
-    
+
+#route to handle if room becomes avalible or not
 @app.route("/update-room", methods=["GET", "POST"])
 def update_room():
     if request.method == "POST":
