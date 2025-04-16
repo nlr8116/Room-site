@@ -101,7 +101,7 @@ def update_room(room_number=None):
 
         # Detect faces and update room availability
         face_count = count_faces(frame)
-        is_available = True if face_count > 0 else False
+        is_available = False if face_count > 0 else True
 
         # Update the database
         room.available = str(is_available)  # Store as string to match DB
@@ -111,7 +111,7 @@ def update_room(room_number=None):
         print(f"Room {room_number} updated. Availability: {is_available}")
 
         # Optionally add a delay between checks
-        sleep(5)  # Pause for 5 seconds before the next iteration
+        sleep(10)  # Pause for 5 seconds before the next iteration
 
 
 @app.route("/sudo")
