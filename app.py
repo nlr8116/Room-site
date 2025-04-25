@@ -86,7 +86,6 @@ def clear_data():
         return render_template("clear_data.html", success=False, error=str(e))
 
 #route to handle if room becomes avalible or not
-
 UPLOAD_FOLDER = 'uploads'  # Directory where uploaded images are stored
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
