@@ -4,15 +4,11 @@ from flask_cors import CORS
 from detectionTest import count_faces
 import os
 from werkzeug.utils import secure_filename
-import cv2
 from time import sleep
 app = Flask(__name__, template_folder = "templetes")
 
 CORS(app)
 
-import os
-from flask import request, jsonify
-from werkzeug.utils import secure_filename
 
 # Configure database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
