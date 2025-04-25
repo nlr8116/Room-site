@@ -119,7 +119,7 @@ def update_room(room_number=None):
         # Process the uploaded image
         frame = cv2.imread(filepath)
         face_count = count_faces(frame)
-        is_available = "Not Avalible" if face_count > 0 else "Avalible"
+        is_available = "Not Available" if face_count > 0 else "Available"
 
         # Update the database
         room.available = str(is_available)  # Store as string to match DB
