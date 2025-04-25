@@ -1,14 +1,18 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from detectionTest import count_faces
+import os
+from werkzeug.utils import secure_filename
 import cv2
 from time import sleep
 app = Flask(__name__, template_folder = "templetes")
 
 CORS(app)
 
-
+import os
+from flask import request, jsonify
+from werkzeug.utils import secure_filename
 
 # Configure database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
@@ -82,37 +86,51 @@ def clear_data():
         return render_template("clear_data.html", success=False, error=str(e))
 
 #route to handle if room becomes avalible or not
-@app.route("/update-room/<room_number>", methods=["GET", "POST"])
+
+UPLOAD_FOLDER = 'uploads'  # Directory where uploaded images are stored
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/update-room/<room_number>", methods=["POST"])
 def update_room(room_number=None):
     room = RoomData.query.filter_by(room_number=room_number).first()
 
     if not room:
-        return render_template(
-            "update_status.html",
-            success=False,
-            error_message=f"No room found with room number {room_number}."
-        )
+        return jsonify({"success": False, "error_message": f"No room found with room number {room_number}."}), 404
 
-    while True:
-        # Capture a frame from the webcam
-        video_capture = cv2.VideoCapture(0)
-        ret, frame = video_capture.read()
-        video_capture.release()
+    # Check if the file is in the request
+    if "photo" not in request.files:
+        return jsonify({"success": False, "error_message": "No file uploaded."}), 400
 
-        # Detect faces and update room availability
+    file = request.files["photo"]
+
+    if file.filename == '':
+        return jsonify({"success": False, "error_message": "No file selected."}), 400
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        # Process the uploaded image
+        frame = cv2.imread(filepath)
         face_count = count_faces(frame)
-        is_available = False if face_count > 0 else True
+        is_available = "Not Avalible" if face_count > 0 else "Avalible"
 
         # Update the database
         room.available = str(is_available)  # Store as string to match DB
         db.session.commit()
-        
+
         # Print status for debugging purposes
         print(f"Room {room_number} updated. Availability: {is_available}")
 
-        # Optionally add a delay between checks
-        sleep(10)  # Pause for 5 seconds before the next iteration
+        return jsonify({"success": True, "message": f"Room {room_number} updated.", "availability": is_available})
 
+    return jsonify({"success": False, "error_message": "Invalid file type. Please upload a PNG, JPG, or JPEG file."}), 400
 
 @app.route("/sudo")
 def sudo():
