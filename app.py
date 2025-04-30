@@ -3,8 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from detectionTest import count_faces
 import os
+import cv2
 from werkzeug.utils import secure_filename
-from time import sleep
+from time import sleep, time
 app = Flask(__name__, template_folder = "templetes")
 
 CORS(app)
@@ -20,6 +21,7 @@ class RoomData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     room_number = db.Column(db.String(100), nullable=False)
     available = db.Column(db.String(100), nullable=False)
+    checkcount = db.Column(db.Integer)
 
 # Create the database table
 with app.app_context():
@@ -33,7 +35,7 @@ def home():
         available = request.form["available"]
 
         # Create a new record
-        new_data = RoomData(room_number=room_number, available=available)
+        new_data = RoomData(room_number=room_number, available=available, checkcount=0)
         db.session.add(new_data)
         db.session.commit()
 
@@ -48,7 +50,7 @@ def submit_data():
 
     if room_number and available:
         try:
-            new_entry = RoomData(room_number=room_number, available=available)
+            new_entry = RoomData(room_number=room_number, available=available, checkcount=0)
             db.session.add(new_entry)
             db.session.commit()
             return render_template("submit.html", success=True)
@@ -81,10 +83,9 @@ def clear_data():
     except Exception as e:
         return render_template("clear_data.html", success=False, error=str(e))
 
-#route to handle if room becomes avalible or not
+#route to handle if room becomes avalible or not based off if it sees a person and when it last saw one
 UPLOAD_FOLDER = 'uploads'  # Directory where uploaded images are stored
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
@@ -115,7 +116,33 @@ def update_room(room_number=None):
         frame = cv2.imread(filepath)
         face_count = count_faces(frame)
         is_available = "Not Available" if face_count > 0 else "Available"
-
+        
+        #updating database based off previous knowledge
+        if is_available == "Available":
+            if room.available == "Not Available" and room.checkcount == 0:
+                room.checkcount += 1
+                db.session.commit()
+                return jsonify({"sleeptime" : 60, "Current DB" : room.available, "see me" : is_available})
+            else:
+                room.checkcount = 0
+                room.available = str(is_available)
+                db.session.commit()
+                return jsonify({"sleeptime" : 5, "CurrentDB" : room.available, "see me" : is_available})
+        
+        if is_available == "Not Available":
+            if room.available == "Available" and room.checkcount < 3:
+                room.checkcount += 1
+                db.session.commit()
+                return jsonify({"sleeptime" : 1, "CurrentDB" : room.available, "see me" : is_available})
+            else:
+                room.checkcount = 0
+                room.available = str(is_available)
+                db.session.commit()
+                return jsonify({"sleeptime" : 120, "CurrentDB" : room.available, "see me" : is_available})
+                
+            
+            
+        '''
         # Update the database
         room.available = str(is_available)  # Store as string to match DB
         db.session.commit()
@@ -124,7 +151,7 @@ def update_room(room_number=None):
         print(f"Room {room_number} updated. Availability: {is_available}")
 
         return jsonify({"success": True, "message": f"Room {room_number} updated.", "availability": is_available})
-
+        '''
     return jsonify({"success": False, "error_message": "Invalid file type. Please upload a PNG, JPG, or JPEG file."}), 400
 
 @app.route("/sudo")
