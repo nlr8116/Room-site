@@ -92,6 +92,27 @@
             margin: 20px 0;
         }
     </style>
+    <script>
+        // Function to fetch and update table data
+        async function updateTable() {
+            try {
+                const response = await fetch(window.location.href); // Fetch data from the current page
+                const parser = new DOMParser();
+                const html = parser.parseFromString(await response.text(), "text/html");
+                
+                // Extract the new table body
+                const newTableBody = html.querySelector("tbody").innerHTML;
+
+                // Update the current table body dynamically
+                document.querySelector("tbody").innerHTML = newTableBody;
+            } catch (error) {
+                console.error("Error updating table:", error);
+            }
+        }
+
+        // Refresh the table every 5 seconds
+        setInterval(updateTable, 5000);
+    </script>
 </head>
 <body>
     <!-- Navigation bar -->
