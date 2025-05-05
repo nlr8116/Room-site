@@ -1,3 +1,4 @@
+#Imports 
 from flask import Flask, request, render_template, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -8,6 +9,7 @@ from werkzeug.utils import secure_filename
 from time import sleep, time
 app = Flask(__name__, template_folder = "templetes")
 
+#Align app with CORS regulations
 CORS(app)
 
 
@@ -60,6 +62,7 @@ def submit_data():
     else:
         return render_template("submit.html", success=False)
 
+#Route that handles the Wytr room's availablility
 @app.route("/wyly-room")
 def wyly_room():
     # Filter records where room_number starts with 'WYTR'
@@ -72,6 +75,7 @@ def view_data():
     # Filter records where room_number starts with 'IESB'
     filtered_data = RoomData.query.filter(RoomData.room_number.like("IESB%")).all()
     return render_template("view_data.html", data=filtered_data)
+
 #route to clear data if large amount of rooms have changed
 @app.route("/clear-data")
 def clear_data():
@@ -83,7 +87,7 @@ def clear_data():
     except Exception as e:
         return render_template("clear_data.html", success=False, error=str(e))
 
-#route to handle if room becomes avalible or not based off if it sees a person and when it last saw one
+#route to handle if room becomes avalible or not based off if it sees a person and when it last saw one and required constants
 UPLOAD_FOLDER = 'uploads'  # Directory where uploaded images are stored
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -141,22 +145,13 @@ def update_room(room_number=None):
                 return jsonify({"sleeptime" : 120, "CurrentDB" : room.available, "see me" : is_available})
                 
             
-            
-        '''
-        # Update the database
-        room.available = str(is_available)  # Store as string to match DB
-        db.session.commit()
-
-        # Print status for debugging purposes
-        print(f"Room {room_number} updated. Availability: {is_available}")
-
-        return jsonify({"success": True, "message": f"Room {room_number} updated.", "availability": is_available})
-        '''
     return jsonify({"success": False, "error_message": "Invalid file type. Please upload a PNG, JPG, or JPEG file."}), 400
 
+#ruote that renders home template
 @app.route("/sudo")
 def sudo():
     return render_template("home.html")
 
+#defines server host and accesible ips
 if __name__ == '__main__':
     app.run(debug=False, host = "0.0.0.0", port = "8000")
