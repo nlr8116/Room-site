@@ -117,12 +117,12 @@ def update_room(room_number=None):
         face_count = count_faces(frame)
         is_available = "Not Available" if face_count > 0 else "Available"
         
-        #updating database based off previous knowledge
+        #updating database based off previous update and last tim eit got that same response 
         if is_available == "Available":
-            if room.available == "Not Available" and room.checkcount == 0:
+            if room.available == "Not Available" and room.checkcount < 3:
                 room.checkcount += 1
                 db.session.commit()
-                return jsonify({"sleeptime" : 60, "Current DB" : room.available, "see me" : is_available})
+                return jsonify({"sleeptime" : 30, "Current DB" : room.available, "see me" : is_available})
             else:
                 room.checkcount = 0
                 room.available = str(is_available)
