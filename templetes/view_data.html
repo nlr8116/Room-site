@@ -91,6 +91,7 @@
             text-align: center;
             margin: 20px 0;
         }
+
     </style>
     <script>
         // Function to fetch and update table data
@@ -148,8 +149,70 @@
                 {% endfor %}
             </tbody>
         </table>
+        <p style="color: white; text-align: center; margin-top: 10px;">Click on the image to zoom in on the floor plan.</p>
+            <div class="bottom-image">
+                <img id="floorPlanImage" src="{{ url_for('static', filename='images/IESB-Floor-plan.png') }}" alt="IESB Floor Plan" width="500" style="cursor: pointer;">
+            </div>
+
+            <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 1000;">
+                <div style="position: relative; width: 90%; height: 90%; margin: auto; top: 5%; overflow: hidden; background-color: white; border-radius: 10px;">
+                    <span id="closeModal" style="position: absolute; top: 10px; right: 20px; font-size: 24px; font-weight: bold; color: black; cursor: pointer;">&times;</span>
+                    <div style="width: 100%; height: 100%; overflow: auto;">
+                        <img id="zoomableImage" src="{{ url_for('static', filename='images/IESB-Floor-plan.png') }}" alt="IESB Floor Plan" style="display: block; margin: auto; max-width: 100%; max-height: 100%; transform-origin: center;">
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                const floorPlanImage = document.getElementById('floorPlanImage');
+                const imageModal = document.getElementById('imageModal');
+                const closeModal = document.getElementById('closeModal');
+                const zoomableImage = document.getElementById('zoomableImage');
+
+                let scale = 1;
+
+                floorPlanImage.addEventListener('click', () => {
+                    imageModal.style.display = 'block';
+                });
+
+                closeModal.addEventListener('click', () => {
+                    imageModal.style.display = 'none';
+                    scale = 1; // Reset zoom scale
+                    zoomableImage.style.transform = `scale(${scale})`;
+                });
+
+                imageModal.addEventListener('wheel', (event) => {
+                    event.preventDefault();
+                    scale += event.deltaY * -0.001;
+                    scale = Math.min(Math.max(0.5, scale), 3); // Limit zoom scale between 0.5x and 3x
+                    zoomableImage.style.transform = `scale(${scale})`;
+                });
+
+                // Allow dragging of the zoomed image
+                let isDragging = false;
+                let startX, startY;
+
+                zoomableImage.addEventListener('mousedown', (event) => {
+                    isDragging = true;
+                    startX = event.clientX - zoomableImage.offsetLeft;
+                    startY = event.clientY - zoomableImage.offsetTop;
+                    zoomableImage.style.cursor = 'grabbing';
+                });
+
+                document.addEventListener('mousemove', (event) => {
+                    if (isDragging) {
+                        zoomableImage.style.position = 'absolute';
+                        zoomableImage.style.left = `${event.clientX - startX}px`;
+                        zoomableImage.style.top = `${event.clientY - startY}px`;
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                    zoomableImage.style.cursor = 'grab';
+                });
+            </script>
     </div>
-</body>
 
     <!-- Footer -->
     <div class="footer">
