@@ -123,7 +123,7 @@ def update_room(room_number=None):
         
         #updating database based off previous update and last tim eit got that same response 
         if is_available == "Available":
-            if room.available == "Not Available" and room.checkcount < 3:
+            if room.available == "Not Available" and room.checkcount < 2:
                 room.checkcount += 1
                 db.session.commit()
                 return jsonify({"sleeptime" : 30, "Current DB" : room.available, "see me" : is_available})
