@@ -1,7 +1,7 @@
 import qrcode
 
 # Data to encode
-data = "http://138.47.157.97:8000/sudo"
+data = "http://138.47.154.232:8000/sudo"
 
 # Create QR code instance
 qr = qrcode.QRCode(
