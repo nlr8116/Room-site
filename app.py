@@ -2,7 +2,7 @@
 from flask import Flask, request, render_template, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from detectionTest import count_faces
+from detectionTest import detect_people
 import os
 import cv2
 from werkzeug.utils import secure_filename
@@ -118,7 +118,7 @@ def update_room(room_number=None):
 
         # Process the uploaded image
         frame = cv2.imread(filepath)
-        face_count = count_faces(frame)
+        face_count = detect_people(frame)
         is_available = "Not Available" if face_count > 0 else "Available"
         
         #updating database based off previous update and last tim eit got that same response 

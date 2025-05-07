@@ -5,123 +5,58 @@
 #################################
 
 import cv2
+import numpy as np
+import time
 
-def count_faces(frame):
-    """
-    Detects faces in the given frame and returns the count.
-    :param frame: The input frame (image) in which to detect faces.
-    :return: Number of faces detected in the frame.
-    """
-    # Load the pre-trained Haar Cascade classifier
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-    
-    # Convert the frame to grayscale
-    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    
-    # Detect faces in the frame
-    faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    
-    # Return the number of faces detected
-    return len(faces)
+# Load YOLO model configuration and weights
+import os
 
-# Main program to test the function
-if __name__ == "__main__":
-    video_capture = cv2.VideoCapture(0)
+cfg_path = 'Face_rec/yolov4-tiny.cfg'
+weights_path = 'Face_rec/yolov4-tiny.weights'
 
-    while True:
-        # Capture frame-by-frame
-        ret, frame = video_capture.read()
-        
-        # Use the function to count faces
-        face_count = count_faces(frame)
-        print(f"Number of faces detected: {face_count}")
+# Debug print to confirm file existence
+print("Checking files...")
+print("Config exists:", os.path.exists(cfg_path))
+print("Weights exist:", os.path.exists(weights_path))
 
-        # Draw rectangles around the faces
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-        
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-        
-        # Display the resulting frame
-        cv2.imshow('Video', frame)
+# Load YOLO network
+net = cv2.dnn.readNetFromDarknet(cfg_path, weights_path)
+# Load class labels (from coco.names)
+with open('Face_rec/coco.names', 'r') as f:
+    classes = [line.strip() for line in f.readlines()]
 
-        # Break the loop with 'q'
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+def detect_people(frame):
+    # Flip the frame 180 degrees (if needed)
+    frame = cv2.flip(frame, -1)
 
-    # Release the webcam and close the window
-    video_capture.release()
-    cv2.destroyAllWindows()
+    # Prepare the image for YOLO (convert to blob)
+    blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
 
+    # Set the blob as input to the network
+    net.setInput(blob)
 
+    # Get the output layer names
+    layer_names = net.getLayerNames()
+    output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
 
+    # Run forward pass to get detections
+    detections = net.forward(output_layers)
 
-# import cv2
-# from time import sleep
-# # Load the pre-trained Haar Cascade classifier
-# face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    height, width, _ = frame.shape
+    person_count = 0
 
-# # Initialize the webcam
-# video_capture = cv2.VideoCapture(0)
+    # Loop through all detections
+    for detection in detections:
+        for obj in detection:
+            scores = obj[5:]
+            class_id = np.argmax(scores)
+            confidence = scores[class_id]
 
-# while True:
-#     # Capture frame-by-frame
-#     ret, frame = video_capture.read()
-#     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            # Only consider detections with high confidence
+            if confidence > 0.5:
+                # Check if the detected object is a "person" (class_id == 0 in coco.names)
+                if classes[class_id] == "person":
+                    person_count += 1
 
-#     # Detect faces in the frame
-#     faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-
-#     # Count the number of faces detected
-#     face_count = len(faces)
-#     print(f"Number of faces detected: {face_count}")
-#     sleep(5)
-#     # Draw rectangles around the faces
-#     for (x, y, w, h) in faces:
-#         cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-
-#     # Display the resulting frame
-#     cv2.imshow('Video', frame)
-
-#     # Break the loop with 'q'
-#     if cv2.waitKey(1) & 0xFF == ord('q'):
-#         break
-
-# # Release the webcam and close the window
-# video_capture.release()
-# cv2.destroyAllWindows()
-
-
-# import numpy as np
-# import cv2
-
-# # Load the Haar Cascade classifier for face detection
-# face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
-# cap = cv2.VideoCapture(0)  # You can replace 0 with a video file name if needed
-
-# while True:
-#     ret, frame = cap.read()
-#     if not ret:
-#         break
-
-#     # Convert frame to grayscale for face detection
-#     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-#     # Detect faces
-#     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-
-#     # Draw rectangles around detected faces
-#     for (x, y, w, h) in faces:
-#         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-#     # Show the frame
-#     cv2.imshow('Face Detection', frame)
-
-#     if cv2.waitKey(1) == ord('q'):
-#         break
-
-# cap.release()
-# cv2.destroyAllWindows()
+    # Return the number of people detected
+    return person_count
